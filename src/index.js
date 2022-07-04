@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import MemoryGame from './MemoryGame';
 
 ReactDOM.render(
-    <App />,
+    <MemoryGame />,
   document.getElementById('root')
 );
