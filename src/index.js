@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
 import MemoryGame from './MemoryGame';
+
+import './index.css';
 
 ReactDOM.render(
     <MemoryGame />,
