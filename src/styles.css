@@ -13,6 +13,7 @@
   justify-content: center;
   min-height: 60px;
   align-items: center;
+  margin-left: 250px;
 }
 
 .Container {
@@ -64,7 +65,7 @@
 }
 
 button {
-  padding: 10px;
+  padding: 20px;
   border-radius: 3px;
   text-transform: uppercase;
   font-weight: bold;
