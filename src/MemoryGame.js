@@ -34,10 +34,10 @@ const ICONS = [
 const getRandomIndex = (totaltems) =>
   Math.floor(Math.random() * totaltems - 1) + 1;
 
-const generateCards = (amount) => {
+const generateCards = (cardsAmount, repetitionAmount) => {
   const cards = [];
 
-  for (let index = 0; index < amount / 2; index++) {
+  for (let index = 0; index < cardsAmount / repetitionAmount; index++) {
     const randomIndex = getRandomIndex(ICONS.length);
 
     if (cards.some((card) => card.icon === ICONS[randomIndex])) {
@@ -46,11 +46,10 @@ const generateCards = (amount) => {
       const card = {
         id: randomIndex,
         icon: ICONS[randomIndex],
-        show: true,
-        disabled: false,
       };
-      cards.push(card);
-      cards.push(card);
+      for (let pushTimes = 0; pushTimes < repetitionAmount; pushTimes++) {
+        cards.push(card);
+      }
     }
   }
 
@@ -68,161 +67,305 @@ const generateCards = (amount) => {
   return sortedCards;
 };
 
-const INITIAL_TIMEOUT = 3000;
-const TOTAL_CARDS = 8;
-const CARDS_PER_ROW = TOTAL_CARDS / 2;
+const CARDS_AMOUNT = 24;
+const DIFFICULTY = {
+  EASY: {
+    label: "Fácil",
+    requiredMatches: 2,
+  },
+  MEDIUM: {
+    label: "Medio",
+    requiredMatches: 3,
+  },
+  HARD: {
+    label: "Difícil",
+    requiredMatches: 4,
+  },
+};
 
 function MemoryGame() {
-  const [cards, setCards] = useState([]);
-  const [cardsData, setCardsData] = useState([]);
+  const [requiredMatches, updateRequiredMatches] = useState(
+    DIFFICULTY.EASY.requiredMatches
+  );
+  const [cards, setCards] = useState(
+    generateCards(CARDS_AMOUNT, requiredMatches)
+  );
+  const [clickedCards, updateClickedCards] = useState([]);
+  const [matches, updateMatches] = useState([]);
+  const [showAll, setShowAll] = useState(true);
+  const [won, setWon] = useState(false);
 
-  useEffect(() => {
-    const updateCards = () => {
-      setCards((cards) => {
-        const updatedCards = cards.map((card, idx) => ({
-          ...card,
-          idx,
-          show: false,
-          disabled: false,
-        }));
-        console.log("updating cards...", { cards, updatedCards });
-
-        return updatedCards;
-      });
-    };
-    setCards(generateCards(8));
-    setTimeout(() => updateCards(), INITIAL_TIMEOUT);
-  }, []);
-
-  const handleCardClicked = (id, idx) => {
-    console.log("handleCardClicked", { idx, id });
-    setCardsData((cardsData) => {
-      const oldData = cardsData.find((cd) => cd.id === id);
-      if (oldData) {
-        // dibujo ya clickeado
-        if (oldData.id === id) {
-          if (oldData.idx === idx) {
-            // misma card ya clickeada
-            return [];
-          } else {
-            // misma card pero en otro lugar
-            // COINCIDENCIA!!
-            setTimeout(() => {
-              setCards((cards) => {
-                return cards.map((card) => {
-                  if (card.id === id) {
-                    return {
-                      ...card,
-                      disabled: true,
-                      show: true,
-                    };
-                  } else {
-                    return card;
-                  }
-                });
-              });
-            }, 500);
-            return [];
-          }
-        } else {
-          // otra card
-          setTimeout(() => {
-            setCards((cards) => {
-              return cards.map((card) => {
-                if (
-                  (card.id === id && card.idx === idx) ||
-                  (card.id === oldData.id && card.idx === oldData.idx)
-                ) {
-                  return {
-                    ...card,
-                    show: false,
-                  };
-                } else {
-                  return card;
-                }
-              });
-            });
-          }, 500);
-          return [];
-        }
-      } else {
-        if (cardsData.length === 0) {
-          setCards((cards) => {
-            const updatedCards = cards.map((card) => {
-              if (card.id === id && card.idx === idx) {
-                return {
-                  ...card,
-                  disabled: false,
-                  show: true,
-                };
-              } else {
-                return card;
-              }
-            });
-            return updatedCards;
-          });
-          return [
-            {
-              id,
-              idx,
-            },
-          ];
-        } else {
-          const otherCardId = cardsData[0].id;
-          const otherCardIdx = cardsData[0].idx;
-
-          setTimeout(() => {
-            setCards((cards) => {
-              const updatedCards = cards.map((card) => {
-                if (
-                  (card.id === id && card.idx === idx) ||
-                  (card.id === otherCardId && card.idx === otherCardIdx)
-                ) {
-                  return {
-                    ...card,
-                    disabled: false,
-                    show: false,
-                  };
-                } else {
-                  return card;
-                }
-              });
-              console.log({ updatedCards });
-              return updatedCards;
-            });
-          }, 500);
-          return [];
-        }
-      }
-    });
+  const resetStatistics = () => {
+    setShowAll(true);
+    setWon(false);
+    setCards(generateCards(CARDS_AMOUNT, requiredMatches));
+    updateClickedCards([]);
+    updateMatches([]);
   };
 
-  console.log("Render:", { cards, cardsData });
+  const handleChangeDifficulty = (difficultyKey) => {
+    resetStatistics();
+    updateRequiredMatches(DIFFICULTY[difficultyKey].requiredMatches);
+  };
+
+  useEffect(() => {
+    setCards(generateCards(CARDS_AMOUNT, requiredMatches));
+  }, [requiredMatches]);
+
+  const handleCardClicked = (idx) => {
+    updateClickedCards([...clickedCards, { idx }]);
+  };
+
+  useEffect(() => {
+    if (matches.length === CARDS_AMOUNT / requiredMatches) {
+      setWon(true);
+      setShowAll(true);
+    }
+  }, [matches.length, requiredMatches]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (clickedCards.length >= requiredMatches) {
+        const id = cards[clickedCards[0].idx].id;
+        if (clickedCards.every((cc) => cards[cc.idx].id === id)) {
+          updateMatches((matches) => [...matches, { id }]);
+        }
+        updateClickedCards([]);
+      }
+    }, 700);
+  }, [clickedCards, cards, requiredMatches]);
 
   return (
     <div className="app">
-      {cards.map(({ id, icon, show, disabled }, idx) => {
-        const br = ((idx + 1) % CARDS_PER_ROW) === 0 ? <p style={{display:'block'}}>j</p> : null
-        console.log({idx, '(idx + 1) % CARDS_PER_ROW) === 0': (idx + 1) % CARDS_PER_ROW === 0});
-        return (
-          <>
-            <Card
-              key={`${id}__${idx}`}
-              id={id}
-              icon={icon}
-              show={show}
-              disabled={
-                !!cardsData.find((cd) => cd.id === id)?.disabled || !!disabled
-              }
-              idx={idx}
-              onCardClicked={handleCardClicked}
-            />
-            {br}
-          </>
-        );
-      })}
+      <div className="Title">
+        <h3>
+          Juego de memoria (<small>Jonatandb@gmail.com</small>)
+        </h3>
+      </div>
+      <div className="Container">
+        <div className="Menu">
+          <div className="Stats">
+            <h3>Estadísticas:</h3>
+            <p>&gt; Aciertos: {matches.length}</p>
+            <p>
+              &gt; Restantes: {CARDS_AMOUNT / requiredMatches - matches.length}
+            </p>
+          </div>
+          <div className="Options">
+            <h3>Dificultad:</h3>
+            {Object.keys(DIFFICULTY).map((difficultyKey) => {
+              const disabled =
+                DIFFICULTY[difficultyKey].requiredMatches === requiredMatches;
+              const active = disabled;
+              return (
+                <button
+                  key={difficultyKey}
+                  className={active ? "active" : ""}
+                  style={{ display: "block" }}
+                  disabled={disabled}
+                  onClick={() => handleChangeDifficulty(difficultyKey)}
+                >
+                  {DIFFICULTY[difficultyKey].label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="Board">
+          {cards.map(({ id, icon }, idx) => {
+            const wasClicked = clickedCards.find((cc) => cc.idx === idx);
+            const wasMatched = matches.find((match) => match.id === id);
+            const shouldBeRevealed = showAll || wasClicked || wasMatched;
+            return (
+              <Card
+                key={`${id}__${idx}`}
+                icon={icon}
+                show={showAll || !wasMatched}
+                shouldBeRevealed={shouldBeRevealed}
+                onCardClicked={() =>
+                  !shouldBeRevealed && handleCardClicked(idx)
+                }
+              />
+            );
+          })}
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            top: "45%",
+            left: "52%",
+            backgroundColor: "cyan",
+            border: "5px dotted black",
+            padding: "15px",
+            borderRadius: "25px",
+            display: showAll ? "block" : "none",
+          }}
+        >
+          <button onClick={() => setShowAll(false)}>
+            <h1>JUGAR!</h1>
+          </button>
+        </div>
+      </div>
+      {won && (
+        <div
+          style={{
+            position: "absolute",
+            top: "40%",
+            left: "48%",
+            backgroundColor: "cyan",
+            border: "5px dotted black",
+            padding: "15px",
+            borderRadius: "25px",
+            display: showAll ? "block" : "none",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyItems: "center",
+            }}
+          >
+            <h1>GANASTE!! 🤩</h1>
+            <button onClick={() => resetStatistics()}>
+              <h1>Volver a JUGAR!</h1>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default MemoryGame;
+
+// const br =
+//   (idx + 1) % CARDS_PER_ROW === 0 ? (
+//     <p style={{ display: "block" }}>j</p>
+//   ) : null;
+// console.log({
+//   idx,
+//   "(idx + 1) % CARDS_PER_ROW) === 0": (idx + 1) % CARDS_PER_ROW === 0,
+// });
+
+//   useEffect(() => {
+//     const updateCards = () => {
+//       setCards((cards) => {
+//         const updatedCards = cards.map((card, idx) => ({
+//           ...card,
+//           idx,
+//           show: false,
+//           disabled: false,
+//         }));
+// console.log("updating cards...", { cards, updatedCards });
+//         return updatedCards;
+//       });
+//     };
+//     setTimeout(() => updateCards(), INITIAL_TIMEOUT);
+//   }, []);
+
+//   const handleCardClicked = (id, idx) => {
+//     console.log("handleCardClicked", { idx, id });
+//     updateCardsState((cardsData) => {
+//       const oldData = cardsData.find((cd) => cd.id === id);
+//       if (oldData) {
+//         // dibujo ya clickeado
+//         if (oldData.id === id) {
+//           if (oldData.idx === idx) {
+//             // misma card ya clickeada
+//             return [];
+//           } else {
+//             // misma card pero en otro lugar
+//             // COINCIDENCIA!!
+//             setTimeout(() => {
+//               setCards((cards) => {
+//                 return cards.map((card) => {
+//                   if (card.id === id) {
+//                     return {
+//                       ...card,
+//                       disabled: true,
+//                       show: true,
+//                     };
+//                   } else {
+//                     return card;
+//                   }
+//                 });
+//               });
+//             }, 500);
+//             return [];
+//           }
+//         } else {
+//           // otra card
+//           setTimeout(() => {
+//             setCards((cards) => {
+//               return cards.map((card) => {
+//                 if (
+//                   (card.id === id && card.idx === idx) ||
+//                   (card.id === oldData.id && card.idx === oldData.idx)
+//                 ) {
+//                   return {
+//                     ...card,
+//                     show: false,
+//                   };
+//                 } else {
+//                   return card;
+//                 }
+//               });
+//             });
+//           }, 500);
+//           return [];
+//         }
+//       } else {
+//         if (cardsData.length === 0) {
+//           setCards((cards) => {
+//             const updatedCards = cards.map((card) => {
+//               if (card.id === id && card.idx === idx) {
+//                 return {
+//                   ...card,
+//                   disabled: false,
+//                   show: true,
+//                 };
+//               } else {
+//                 return card;
+//               }
+//             });
+//             return updatedCards;
+//           });
+//           return [
+//             {
+//               id,
+//               idx,
+//             },
+//           ];
+//         } else {
+//           const otherCardId = cardsData[0].id;
+//           const otherCardIdx = cardsData[0].idx;
+
+//           setTimeout(() => {
+//             setCards((cards) => {
+//               const updatedCards = cards.map((card) => {
+//                 if (
+//                   (card.id === id && card.idx === idx) ||
+//                   (card.id === otherCardId && card.idx === otherCardIdx)
+//                 ) {
+//                   return {
+//                     ...card,
+//                     disabled: false,
+//                     show: false,
+//                   };
+//                 } else {
+//                   return card;
+//                 }
+//               });
+//               console.log({ updatedCards });
+//               return updatedCards;
+//             });
+//           }, 500);
+//           return [];
+//         }
+//       }
+//     });
+//   };
+
+// console.log("Render:", { cards, cardsData: cardsState });

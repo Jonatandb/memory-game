@@ -1,8 +1,10 @@
 .card {
   width: 150px;
   max-width: 150px;
+  min-width: 150px;
   height: 150px;
   min-height: 150px;
+  max-height: 150px;
   font-size: 100px;
   display: flex;
   align-items: center;
@@ -12,21 +14,21 @@
   background-color: rgb(255 255 255);
   margin: 2px;
   animation: fade 2.2s;
+  
 }
 
-.card.hide {
+
+.card.not-revealed {
   background-color: rgb(255, 0, 0);
 }
 
+.card.hide {
+  visibility: hidden;
+}
 .card.nonClickable {
   cursor: default;
 }
 
-/* 
-.card:hover {
-  border: 1px solid white;
-  background-color: orange;
-} */
 
 @keyframes fade {
   0% {
