@@ -2,50 +2,154 @@ import { useEffect, useState } from "react";
 import Card from "./components/Card";
 import "./styles.css";
 
-const ICONS = [
-  "🎄",
-  "🎀",
-  "🎃",
-  "🎡",
-  "🎨",
-  "🛒",
-  "🍫",
-  "🏡",
-  "💖",
-  "😍",
-  "🎅",
-  "🎁",
-  "🍬",
-  "🧉",
-  "🍷",
-  "🍎",
-  "🍌",
-  "🥝",
-  "🍒",
-  "🧷",
-  "🌻",
-  "🥕",
-  "🚲",
-  "🛴",
-  "🌈",
-  "🔥",
-];
+const CATEGORIES = {
+  random: {
+    label: "Varios",
+    icons: [
+      "🎄",
+      "🎀",
+      "🎃",
+      "🎡",
+      "🎨",
+      "🛒",
+      "🍫",
+      "🏡",
+      "💖",
+      "😍",
+      "🎅",
+      "🎁",
+      "🍬",
+      "🧉",
+      "🍷",
+      "🍎",
+      "🍌",
+      "🥝",
+      "🍒",
+      "🧷",
+      "🌻",
+      "🥕",
+      "🚲",
+      "🛴",
+      "🌈",
+      "🔥",
+    ],
+  },
+  animals: {
+    label: "Animales",
+    icons: [
+      "🐟",
+      "🐶",
+      "🐱",
+      "🐔",
+      "🐦",
+      "🐢",
+      "🐳",
+      "🐙",
+      "🐌",
+      "🐎",
+      "🐘",
+      "🐲",
+      "🐞",
+      "🐺",
+      "🐍",
+      "🐒",
+    ],
+  },
+  vegetables: {
+    label: "Vegetales",
+    icons: [
+      "🍅",
+      "🍆",
+      "🌽",
+      "🥕",
+      "🥒",
+      "🥬",
+      "🍏",
+      "🥑",
+      "🍒",
+      "🍓",
+      "🍇",
+      "🍌",
+    ],
+  },
+  vehicles: {
+    label: "Vehículos",
+    icons: [
+      "🚓",
+      "🚙",
+      "🚍",
+      "🛫",
+      "🚂",
+      "🚒",
+      "🚜",
+      "🚤",
+      "🚢",
+      "🚞",
+      "🚁",
+      "🚠",
+    ],
+  },
+  people: {
+    label: "Personas",
+    icons: [
+      "👫",
+      "🧍‍♀️",
+      "🧍‍♂️",
+      "💃",
+      "🕺",
+      "🕴",
+      "👨‍🚀",
+      "👩‍⚕️",
+      "🕵️‍♂️",
+      "👨‍🔧",
+      "👩‍🍳",
+      "👮‍♂️",
+      "👩‍🏫",
+      "👨‍🌾",
+      "🧙‍♂️",
+      "🎅",
+      "🙋‍♂️",
+      "👨‍👩‍",
+    ],
+  },
+  tools: {
+    label: "Herramientas",
+    icons: [
+      "🧰",
+      "🔪",
+      "📞",
+      "🔨",
+      "🔧",
+      "🧲",
+      "🧵",
+      "🧶",
+      "🩺",
+      "🧱",
+      "💉",
+      "🧪",
+    ],
+  },
+};
 
 const getRandomIndex = (totaltems) =>
   Math.floor(Math.random() * totaltems - 1) + 1;
 
-const generateCards = (cardsAmount, repetitionAmount) => {
+const generateCards = (cardsAmount, repetitionAmount, category = "random") => {
   const cards = [];
 
   for (let index = 0; index < cardsAmount / repetitionAmount; index++) {
-    const randomIndex = getRandomIndex(ICONS.length);
+    const randomIndex = getRandomIndex(CATEGORIES[category].icons.length);
 
-    if (cards.some((card) => card.icon === ICONS[randomIndex])) {
+    if (
+      cards.some(
+        (card) => card.icon === CATEGORIES[category].icons[randomIndex]
+      )
+    ) {
       index--;
     } else {
       const card = {
         id: randomIndex,
-        icon: ICONS[randomIndex],
+        icon: CATEGORIES[category].icons[randomIndex],
       };
       for (let pushTimes = 0; pushTimes < repetitionAmount; pushTimes++) {
         cards.push(card);
@@ -94,6 +198,7 @@ function MemoryGame() {
   const [matches, updateMatches] = useState([]);
   const [showAll, setShowAll] = useState(true);
   const [won, setWon] = useState(false);
+  const [category, updateCategory] = useState("random");
 
   const resetStatistics = () => {
     setShowAll(true);
@@ -108,9 +213,14 @@ function MemoryGame() {
     updateRequiredMatches(DIFFICULTY[difficultyKey].requiredMatches);
   };
 
+  const handleChangeCategory = (categoryKey) => {
+    resetStatistics();
+    updateCategory(categoryKey);
+  };
+
   useEffect(() => {
-    setCards(generateCards(CARDS_AMOUNT, requiredMatches));
-  }, [requiredMatches]);
+    setCards(generateCards(CARDS_AMOUNT, requiredMatches, category));
+  }, [requiredMatches, category]);
 
   const handleCardClicked = (idx) => {
     updateClickedCards([...clickedCards, { idx }]);
@@ -152,6 +262,22 @@ function MemoryGame() {
             </p>
           </div>
           <div className="Options">
+            <h3>Categoría:</h3>
+            {Object.keys(CATEGORIES).map((categoryKey) => {
+              const disabled = categoryKey === category;
+              const active = disabled;
+              return (
+                <button
+                  key={categoryKey}
+                  className={active ? "active" : ""}
+                  style={{ display: "block", padding:'7px', fontSize:'15px' }}
+                  disabled={disabled}
+                  onClick={() => handleChangeCategory(categoryKey)}
+                >
+                  {CATEGORIES[categoryKey].label}
+                </button>
+              );
+            })}
             <h3>Dificultad:</h3>
             {Object.keys(DIFFICULTY).map((difficultyKey) => {
               const disabled =
@@ -161,7 +287,7 @@ function MemoryGame() {
                 <button
                   key={difficultyKey}
                   className={active ? "active" : ""}
-                  style={{ display: "block" }}
+                  style={{ display: "block", padding:'7px', fontSize:'15px' }}
                   disabled={disabled}
                   onClick={() => handleChangeDifficulty(difficultyKey)}
                 >
