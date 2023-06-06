@@ -224,6 +224,7 @@ function MemoryGame() {
 
   const handleCardClicked = (idx) => {
     updateClickedCards([...clickedCards, { idx }]);
+
   };
 
   useEffect(() => {
@@ -240,7 +241,7 @@ function MemoryGame() {
         if (clickedCards.every((cc) => cards[cc.idx].id === id)) {
           updateMatches((matches) => [...matches, { id }]);
         }
-        updateClickedCards([]);
+        updateClickedCards([]);        
       }
     }, 700);
   }, [clickedCards, cards, requiredMatches]);
@@ -309,7 +310,7 @@ function MemoryGame() {
                 show={showAll || !wasMatched}
                 shouldBeRevealed={shouldBeRevealed}
                 onCardClicked={() =>
-                  !shouldBeRevealed && handleCardClicked(idx)
+                  !shouldBeRevealed && clickedCards.length<2?handleCardClicked(idx):""
                 }
               />
             );
