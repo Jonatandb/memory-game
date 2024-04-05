@@ -223,7 +223,9 @@ function MemoryGame() {
   }, [requiredMatches, category]);
 
   const handleCardClicked = (idx) => {
-    updateClickedCards([...clickedCards, { idx }]);
+    if (clickedCards.length < requiredMatches) {
+      updateClickedCards([...clickedCards, { idx }]);
+    }
   };
 
   useEffect(() => {
